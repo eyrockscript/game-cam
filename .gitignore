@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+.wrangler/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example

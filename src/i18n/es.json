@@ -1,0 +1,87 @@
+{
+  "title": "Game Cam",
+  "hud": {
+    "score": "Puntos",
+    "lives": "Vidas",
+    "time": "Tiempo",
+    "best": "Récord",
+    "players": "Jugadores"
+  },
+  "actions": {
+    "enableCamera": "Activar cámara",
+    "fullscreen": "Pantalla completa",
+    "playAgain": "Otra vez",
+    "menu": "Menú"
+  },
+  "menu": {
+    "pick": "Pon tu mano sobre un juego para elegirlo",
+    "best": "Récord {score}"
+  },
+  "games": {
+    "keepUp": {
+      "title": "Pelota",
+      "description": "No dejen caer la pelota"
+    },
+    "bubbles": {
+      "title": "Burbujas",
+      "description": "Revienten todas las que puedan en 60 segundos"
+    },
+    "ninja": {
+      "title": "Ninja",
+      "description": "Corten la fruta con la mano, eviten las bombas"
+    },
+    "dodge": {
+      "title": "Esquiva",
+      "description": "Que ninguna roca los toque"
+    },
+    "workout": {
+      "title": "Rutina",
+      "description": "Ejercicio guiado: cuenta tus repeticiones"
+    }
+  },
+  "workout": {
+    "rest": "Descansa",
+    "next": "Siguiente: {name}",
+    "plusOne": "+1",
+    "step": "Ejercicio {current} de {total}",
+    "exercises": {
+      "squats": {
+        "name": "Sentadillas",
+        "instruction": "Baja doblando las rodillas y vuelve a subir"
+      },
+      "jumpingJacks": {
+        "name": "Saltos de tijera",
+        "instruction": "Abre piernas y sube los brazos, luego cierra"
+      },
+      "highKnees": {
+        "name": "Rodillas arriba",
+        "instruction": "Sube las rodillas a la altura de la cadera"
+      },
+      "armRaises": {
+        "name": "Brazos arriba",
+        "instruction": "Sube ambos brazos sobre la cabeza y bájalos"
+      }
+    }
+  },
+  "messages": {
+    "installForFullscreen": "Este navegador no permite pantalla completa. Toca Compartir y luego \"Agregar a inicio\", y abre el juego desde ese ícono.",
+    "intro": "Párense a unos 2 o 3 metros de la cámara. Caben hasta 5 personas.",
+    "loading": "Cargando detector de movimiento...",
+    "noBody": "No veo a nadie. Aléjense un poco de la cámara.",
+    "getReady": "¡Prepárense!",
+    "gameOver": "Hicieron {score} puntos",
+    "newBest": "¡Nuevo récord!",
+    "cameraError": "No se pudo abrir la cámara: {error}",
+    "modelError": "No se pudo cargar el detector: {error}"
+  },
+  "intro": {
+    "eyebrow": "Juegos de movimiento"
+  },
+  "countdown": {
+    "go": "¡Ya!"
+  },
+  "results": {
+    "score": "Puntos",
+    "best": "Récord {score}"
+  }
+}
