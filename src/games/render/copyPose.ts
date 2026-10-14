@@ -66,7 +66,8 @@ function drawBadges(ctx: CanvasRenderingContext2D, state: CopyPoseState, world: 
     const y = badge.y - u * 0.13
     drawHoldRing(ctx, badge.x, y, u * 0.04, badge.progress, u * 0.01)
     if (!badge.done) continue
-    drawText(ctx, t('copyPose.nice'), badge.x, y, {
+    // Below the ring: the label is wider than the ring and would cover it.
+    drawText(ctx, t('copyPose.nice'), badge.x, y + u * 0.075, {
       size: u * TYPE.caption,
       color: badge.color,
       align: 'center',
