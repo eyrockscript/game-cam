@@ -40,6 +40,10 @@
       "title": "Estatuas",
       "description": "Bailen con la música y congélense cuando pare"
     },
+    "copyPose": {
+      "title": "Copia la pose",
+      "description": "Imiten la figura y sosténganla un segundo"
+    },
     "workout": {
       "title": "Rutina",
       "description": "Ejercicio guiado: cuenta tus repeticiones"
@@ -83,6 +87,11 @@
     "moved": "¡Te moviste!",
     "safe": "¡Nadie se movió!",
     "caught": "¡Alguien se movió!"
+  },
+  "copyPose": {
+    "copy": "Copien la pose",
+    "nice": "¡Bien!",
+    "miss": "Nadie la logró"
   },
   "messages": {
     "installForFullscreen": "Este navegador no permite pantalla completa. Toca Compartir y luego \"Agregar a inicio\", y abre el juego desde ese ícono.",
