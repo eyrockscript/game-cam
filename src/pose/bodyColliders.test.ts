@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type Landmark, buildBody, coverMapping, toCanvas } from './bodyColliders'
+import { type Landmark, MAX_RADIUS_FACTOR, MIN_RADIUS_FACTOR, bodyRadius, buildBody, coverMapping, toCanvas } from './bodyColliders'
 
 const mapping = coverMapping(1280, 720, 1280, 720)
 
@@ -40,5 +40,24 @@ describe('buildBody', () => {
     const previous = new Map([[9, { x: 630, y: 360 }]])
     const { parts } = buildBody(lm, previous, mapping, 20, 0.1)
     expect(parts.get(9)!.vx).toBeCloseTo(100)
+  })
+})
+
+describe('bodyRadius', () => {
+  const shoulders = (left: number, right: number) =>
+    pose({ 5: { x: left, y: 0.4, visibility: 0.9 }, 6: { x: right, y: 0.4, visibility: 0.9 } })
+
+  it('falls back when the shoulders are not visible', () => {
+    expect(bodyRadius(pose({}), mapping, 40)).toBe(40)
+  })
+
+  it('scales with shoulder width', () => {
+    // 0.2 × 1280 px = 256 px shoulders → 256 × 0.22
+    expect(bodyRadius(shoulders(0.4, 0.6), mapping, 40)).toBeCloseTo(56.32)
+  })
+
+  it('clamps very close and very far people', () => {
+    expect(bodyRadius(shoulders(0.1, 0.9), mapping, 40)).toBeCloseTo(40 * MAX_RADIUS_FACTOR)
+    expect(bodyRadius(shoulders(0.49, 0.51), mapping, 40)).toBeCloseTo(40 * MIN_RADIUS_FACTOR)
   })
 })

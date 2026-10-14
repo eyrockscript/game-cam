@@ -7,6 +7,7 @@ import {
   RIGHT_WRIST,
   type TrackedPoint,
   type ViewMapping,
+  bodyRadius,
   buildBody,
   isVisible,
   toCanvas,
@@ -105,7 +106,7 @@ function toPlayer(
   return { id, color, joints, colliders: [...parts.values()], hands, head: parts.get(NOSE) ?? null }
 }
 
-/** Turns raw poses into stable players (ids, colors, per-person velocities). */
+/** Turns raw poses into stable players (ids, colors, per-person velocities). `baseRadius` is the fallback collider size. */
 export function trackPlayers(
   poses: readonly (readonly Landmark[])[],
   tracker: TrackerState,
@@ -133,7 +134,8 @@ export function trackPlayers(
     const id = prev?.id ?? nextId++
     const color = prev?.color ?? freeColor(taken)
     taken.add(color)
-    const body = buildBody(landmarks, prev?.positions ?? new Map(), mapping, baseRadius, dt)
+    const radius = bodyRadius(landmarks, mapping, baseRadius)
+    const body = buildBody(landmarks, prev?.positions ?? new Map(), mapping, radius, dt)
     players.push(toPlayer(id, color, body.parts, namedJoints(landmarks, mapping)))
     tracked.push({ id, color, center, positions: body.positions })
   })

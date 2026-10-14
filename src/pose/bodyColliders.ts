@@ -62,6 +62,29 @@ export function isVisible(lm: Landmark | undefined): lm is Landmark {
   return lm !== undefined && (lm.visibility ?? 1) >= MIN_VISIBILITY
 }
 
+const LEFT_SHOULDER = 5
+const RIGHT_SHOULDER = 6
+/** Collider radius per pixel of shoulder width (≈ the current size at 2.5 m). */
+export const RADIUS_PER_SHOULDER = 0.22
+export const MIN_RADIUS_FACTOR = 0.7
+export const MAX_RADIUS_FACTOR = 2.3
+
+/**
+ * Collider size for one person, proportional to how big they look: someone
+ * close to the camera gets bigger hands than someone far away. Bounded around
+ * `fallback`, which is also used when the shoulders aren't visible.
+ */
+export function bodyRadius(landmarks: readonly Landmark[], mapping: ViewMapping, fallback: number): number {
+  const left = landmarks[LEFT_SHOULDER]
+  const right = landmarks[RIGHT_SHOULDER]
+  if (!isVisible(left) || !isVisible(right)) return fallback
+  const a = toCanvas(left, mapping)
+  const b = toCanvas(right, mapping)
+  const width = Math.hypot(a.x - b.x, a.y - b.y)
+  if (width === 0) return fallback
+  return Math.min(fallback * MAX_RADIUS_FACTOR, Math.max(fallback * MIN_RADIUS_FACTOR, width * RADIUS_PER_SHOULDER))
+}
+
 export interface Body {
   /** Collider per landmark index (only visible parts). Wrist indices hold the estimated palm. */
   readonly parts: ReadonlyMap<number, Collider>
