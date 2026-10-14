@@ -28,14 +28,18 @@ Players in a small room cannot stand 2–3 m from the camera. Today:
      player is full; it switches only after the opposite condition holds for
      `FRAMING_HOLD_MS = 1000` (hysteresis, no flicker). Starts as `full`.
    - With zero players the state does not change.
-   - Exposed on `FrameInput` as a new readonly field `framing: Framing`, computed
-     in `main.ts` from the player feed.
+   - Exposed on `FrameInput` as a new optional field `framing?: Framing`
+     (absent = `'full'`, so existing tests and games stay valid), computed in
+     `main.ts` from the player feed.
 
 2. **Adaptive workout** — `src/workout/routine.ts`.
-   - `UPPER_BODY_ORDER: ExerciseId[] = ['armRaises', 'punches', 'armOpeners']`.
+   - `UPPER_BODY_ORDER: ExerciseId[] = ['armRaises', 'sidePunches', 'armOpeners']`.
    - Two new exercises in `src/workout/exercises.ts`:
-     - `punches`: alternating wrist extension in front of the shoulder
-       (wrist–shoulder distance / shoulder width > 1.1, then back < 0.6), per side.
+     - `sidePunches`: one channel per arm. Active = wrist out to its own side,
+       horizontal distance wrist–shoulder > 1.1 × shoulder width and within
+       0.5 × shoulder width of shoulder height; rest = horizontal distance
+       < 0.6 × shoulder width. Counts on rest → active. (Forward punches are
+       not used: a 2D camera can't see extension toward the lens.)
      - `armOpeners`: both wrists move from in front of the chest (wrists closer
        than shoulder width) to wide apart (wrist distance > 2.2 × shoulder width).
    - The routine is picked in `start()` from the framing at that moment. `start`
@@ -46,15 +50,21 @@ Players in a small room cannot stand 2–3 m from the camera. Today:
    - After `getUserMedia`, if `track.getCapabilities().zoom` exists, apply
      `{ advanced: [{ zoom: min }] }`. A failure is logged with `console.warn`
      and is not fatal.
-   - **Fit mode** in `bodyColliders.ts`: new `fitMapping` (letterbox, contain).
-     `viewMapping(...)` chooses `fit` when the cover crop would discard more
-     than `MAX_CROP = 0.3` of either video dimension, otherwise `cover`.
-     `drawMirroredVideo` already works from the mapping. Bars are filled with
-     the theme background.
+   - **Fit mode** — new `src/pose/viewport.ts`: `viewport(vw, vh, cw, ch)`
+     returns `{ stage, mapping }`. When the cover crop would discard more than
+     `MAX_CROP = 0.3` of the video width or height, `stage` is the centered
+     letterboxed video rect; otherwise it is the whole canvas. `mapping` is
+     `coverMapping(vw, vh, stage.width, stage.height)` (exact fit inside the stage).
+   - The **stage is the play area**: `world = worldFor(stage.width, stage.height)`,
+     the canvas is translated to `stage.x, stage.y` before drawing video,
+     players and session, and taps are shifted into stage coordinates. Games,
+     menus and colliders need no changes, and nothing lands on the bars where
+     hands can't reach. Bars are filled with `#0f1115` (the theme color).
 
-4. **Body-scaled colliders** — `baseRadius` per player =
-   `clamp(shoulderWidth × 0.22, screenMin × 0.025, screenMin × 0.08)`, falling
-   back to the current 3.5% when shoulders aren't visible. Computed in
+4. **Body-scaled colliders** — per-player radius =
+   `clamp(shoulderWidthPx × 0.22, fallback × 0.7, fallback × 2.3)` where
+   `fallback` is the current `screenMin × 0.035` (so the bounds are 2.45%–8%
+   of the screen). Shoulders not visible → `fallback`. Computed in
    `trackPlayers` per person.
 
 5. **Copy** — `messages.intro` gets a line saying half a body also works, and
@@ -64,8 +74,8 @@ Players in a small room cannot stand 2–3 m from the camera. Today:
 ### Tests
 
 - framing hysteresis (switch after 1 s, no switch at 900 ms, zero players keeps state)
-- `viewMapping` picks fit for portrait-screen + landscape-video, cover for 16:9 on 16:9
-- `punches` / `armOpeners` counting with skeleton fixtures
+- `viewport` picks fit for portrait-screen + landscape-video, cover for 16:9 on 16:9
+- `sidePunches` / `armOpeners` counting with skeleton fixtures
 - routine selection by framing
 - collider radius clamps
 
