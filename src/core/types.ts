@@ -18,6 +18,9 @@ export type JointName =
 /** How much of the players' bodies the camera sees: 'upper' = no legs (small room). */
 export type Framing = 'full' | 'upper'
 
+/** Background music style. Each game picks one; the menu has its own. */
+export type Mood = 'menu' | 'upbeat' | 'calm'
+
 /** Raw skeleton point in canvas pixels; score is the model confidence 0..1. */
 export interface Joint {
   readonly x: number
@@ -60,6 +63,8 @@ export interface GameStatus {
   readonly score: number
   readonly lives?: number
   readonly secondsLeft?: number
+  /** Lets a game silence the music mid-round (e.g. Statues); absent = 'on'. */
+  readonly music?: 'on' | 'off'
 }
 
 export interface StepResult<S> {
@@ -79,6 +84,8 @@ export interface MiniGame<S> {
   /** i18n keys (see src/i18n/es.json → games.<id>.title / .description). */
   readonly titleKey: string
   readonly descriptionKey: string
+  /** Music for countdown and play; defaults to 'upbeat'. */
+  readonly mood?: Mood
   start(world: World, random: () => number, context?: StartContext): S
   step(state: S, input: FrameInput, world: World, random: () => number): StepResult<S>
   render(ctx: CanvasRenderingContext2D, state: S, world: World): void
