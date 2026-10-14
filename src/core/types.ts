@@ -15,6 +15,9 @@ export type JointName =
   | 'leftAnkle'
   | 'rightAnkle'
 
+/** How much of the players' bodies the camera sees: 'upper' = no legs (small room). */
+export type Framing = 'full' | 'upper'
+
 /** Raw skeleton point in canvas pixels; score is the model confidence 0..1. */
 export interface Joint {
   readonly x: number
