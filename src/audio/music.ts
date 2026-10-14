@@ -31,6 +31,8 @@ export class HybridMusic implements MusicSource {
 
   setManifest(manifest: TrackManifest): void {
     this.manifest = manifest
+    // A manifest that arrives after the first cue switches the current mood from synth to its track.
+    if (this.playing && this.current) this.play(this.current)
   }
 
   play(mood: Mood): void {

@@ -16,7 +16,7 @@ export class AudioEngine {
   /** Creates (or resumes) the context. Safe to call more than once. */
   unlock(): void {
     if (this.ctx) {
-      void this.ctx.resume()
+      this.ctx.resume().catch((error: unknown) => console.warn('Audio context could not resume', error))
       return
     }
     const ctx = new AudioContext()
@@ -27,7 +27,8 @@ export class AudioEngine {
     this.master = master
     // Background tabs throttle timers, which would garble the sequencer: suspend instead.
     document.addEventListener('visibilitychange', () => {
-      void (document.hidden ? ctx.suspend() : ctx.resume())
+      const change = document.hidden ? ctx.suspend() : ctx.resume()
+      change.catch((error: unknown) => console.warn('Audio context visibility change failed', error))
     })
   }
 

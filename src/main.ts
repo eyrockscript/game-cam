@@ -53,8 +53,9 @@ const muteButton = document.getElementById('mute')!
 
 function syncMuteButton(): void {
   const muted = audio.muted()
+  // Fixed label; the toggle state is conveyed only by aria-pressed.
   muteButton.setAttribute('aria-pressed', String(muted))
-  muteButton.title = t(muted ? 'actions.unmute' : 'actions.mute')
+  muteButton.title = t('actions.mute')
   muteButton.setAttribute('aria-label', muteButton.title)
 }
 
@@ -63,7 +64,11 @@ function toggleMute(): void {
   syncMuteButton()
 }
 
-muteButton.addEventListener('click', toggleMute)
+muteButton.addEventListener('click', () => {
+  // Every gesture resumes the context in case the browser suspended it.
+  audio.unlock()
+  toggleMute()
+})
 syncMuteButton()
 
 /** Tracks are optional: without a manifest everything plays synthesized music. */
@@ -85,11 +90,13 @@ let pendingKeys: KeyCommand[] = []
 let pendingTaps: Point[] = []
 // Taps/clicks on the canvas, converted to canvas pixels (the canvas is DPR-scaled).
 canvas.addEventListener('pointerup', (e) => {
+  audio.unlock()
   const rect = canvas.getBoundingClientRect()
   const point = { x: ((e.clientX - rect.left) / rect.width) * canvas.width, y: ((e.clientY - rect.top) / rect.height) * canvas.height }
   pendingTaps = [...pendingTaps, point]
 })
 window.addEventListener('keydown', (e) => {
+  audio.unlock()
   if (e.code === 'KeyF') return void handleFullscreen()
   if (e.code === 'KeyM') return void toggleMute()
   const command = KEY_COMMANDS[e.code]

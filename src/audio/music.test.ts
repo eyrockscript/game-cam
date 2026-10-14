@@ -30,6 +30,24 @@ describe('HybridMusic', () => {
     expect(calls).toEqual(['synth.pause', 'tracks.play:upbeat:/music/upbeat-1.mp3'])
   })
 
+  it('switches to the track when the manifest arrives while playing', () => {
+    const { calls, synth, tracks } = fakes()
+    const music = new HybridMusic(synth, tracks, '/')
+    music.play('upbeat')
+    music.setManifest(manifest)
+    expect(calls.slice(-2)).toEqual(['synth.pause', 'tracks.play:upbeat:/music/upbeat-1.mp3'])
+  })
+
+  it('does not start music when the manifest arrives while paused', () => {
+    const { calls, synth, tracks } = fakes()
+    const music = new HybridMusic(synth, tracks, '/')
+    music.play('upbeat')
+    music.pause()
+    calls.length = 0
+    music.setManifest(manifest)
+    expect(calls).toEqual([])
+  })
+
   it('falls back to synth for moods without a track', () => {
     const { calls, synth, tracks } = fakes()
     const music = new HybridMusic(synth, tracks, '/')
