@@ -7,10 +7,12 @@ import type { Player } from './core/types'
 import { worldFor } from './game/physics'
 import { GAMES } from './games/registry'
 import { applyStaticTranslations, t } from './i18n'
-import { type ViewMapping, coverMapping } from './pose/bodyColliders'
+import type { ViewMapping } from './pose/bodyColliders'
+import { type FramingState, initialFraming, updateFraming } from './pose/framing'
+import { type Stage, viewport } from './pose/viewport'
 import { type TrackerState, emptyTracker, trackPlayers } from './pose/players'
 import { type PoseTracker, createPoseTracker } from './pose/poseTracker'
-import { drawMirroredVideo } from './render/renderer'
+import { drawLetterbox, drawMirroredVideo } from './render/renderer'
 import { renderPlayers, renderSession } from './render/sessionRenderer'
 import { isFullscreen, isStandalone, onFullscreenChange, toggleFullscreen } from './ui/fullscreen'
 import { createHud } from './ui/hud'
@@ -86,7 +88,12 @@ function resizeCanvas(): void {
   canvas.height = Math.round(window.innerHeight * devicePixelRatio)
 }
 
-function loadBests(): Record<string, number> {
+/** Taps are collected in canvas pixels; games live in stage coordinates. */
+function toStage(points: readonly Point[], stage: Stage): Point[] {
+  return points.map((p) => ({ x: p.x - stage.x, y: p.y - stage.y }))
+}
+
+function loadBests():Record<string, number> {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(BESTS_KEY) ?? '{}')
     if (typeof parsed !== 'object' || parsed === null) return {}
@@ -135,25 +142,40 @@ function createPlayerFeed(tracker: PoseTracker): (mapping: ViewMapping, baseRadi
 
 function runLoop(tracker: PoseTracker): void {
   let session: Session = createSession(loadBests())
+  let framing: FramingState = initialFraming
   let lastTime = performance.now()
   const playersFor = createPlayerFeed(tracker)
 
   const frame = (now: number): void => {
     const dt = Math.min(MAX_DT, (now - lastTime) / 1000)
     lastTime = now
-    const world = worldFor(canvas.width, canvas.height)
-    const mapping = coverMapping(video.videoWidth, video.videoHeight, canvas.width, canvas.height)
-    const players = playersFor(mapping, Math.min(world.width, world.height) * 0.035)
+    const view = viewport(video.videoWidth, video.videoHeight, canvas.width, canvas.height)
+    const world = worldFor(view.stage.width, view.stage.height)
+    const players = playersFor(view.mapping, Math.min(world.width, world.height) * 0.035)
 
-    const step = stepSession(session, GAMES, { players, dt, now }, world, { keys: pendingKeys, taps: pendingTaps })
+    const nextFraming = updateFraming(framing, players, dt * 1000)
+    if (nextFraming.framing === 'upper' && framing.framing === 'full') showToast(t('messages.upperBody'))
+    framing = nextFraming
+
+    const input = { players, dt, now, framing: framing.framing }
+    const controls = { keys: pendingKeys, taps: toStage(pendingTaps, view.stage) }
+    const step = stepSession(session, GAMES, input, world, controls)
     pendingKeys = []
     pendingTaps = []
     session = step.session
     if (step.events.includes('gameOver')) localStorage.setItem(BESTS_KEY, JSON.stringify(session.bests))
 
-    drawMirroredVideo(ctx, video, mapping)
+    drawLetterbox(ctx, view.stage)
+    ctx.save()
+    ctx.translate(view.stage.x, view.stage.y)
+    ctx.beginPath()
+    ctx.rect(0, 0, view.stage.width, view.stage.height)
+    ctx.clip()
+    drawMirroredVideo(ctx, video, view.mapping, view.stage)
     renderPlayers(ctx, players)
     renderSession(ctx, session, GAMES, world, now)
+    ctx.restore()
+
     hud.update(session, GAMES, players.length)
     if (players.length === 0 && session.screen.kind !== 'playing') hud.showMessage(t('messages.noBody'))
     else hud.hideOverlay()

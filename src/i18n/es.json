@@ -73,9 +73,10 @@
   },
   "messages": {
     "installForFullscreen": "Este navegador no permite pantalla completa. Toca Compartir y luego \"Agregar a inicio\", y abre el juego desde ese ícono.",
-    "intro": "Párense a unos 2 o 3 metros de la cámara. Caben hasta 5 personas.",
+    "intro": "Párense frente a la cámara: de cuerpo completo a 2 o 3 metros, o de medio cuerpo si el cuarto es chico. Caben hasta 5 personas.",
     "loading": "Cargando detector de movimiento...",
-    "noBody": "No veo a nadie. Aléjense un poco de la cámara.",
+    "noBody": "No veo a nadie. Párense frente a la cámara; basta con que se vean de la cintura para arriba.",
+    "upperBody": "Los veo de medio cuerpo. Los juegos funcionan igual y la rutina usará ejercicios de brazos.",
     "getReady": "¡Prepárense!",
     "gameOver": "Hicieron {score} puntos",
     "newBest": "¡Nuevo récord!",
