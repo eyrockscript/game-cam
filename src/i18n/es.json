@@ -11,7 +11,9 @@
     "enableCamera": "Activar cámara",
     "fullscreen": "Pantalla completa",
     "playAgain": "Otra vez",
-    "menu": "Menú"
+    "menu": "Menú",
+    "mute": "Silenciar música",
+    "unmute": "Activar música"
   },
   "menu": {
     "pick": "Pon tu mano sobre un juego para elegirlo",

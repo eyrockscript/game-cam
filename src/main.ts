@@ -6,6 +6,12 @@ import { startCamera } from './camera'
 import type { Player } from './core/types'
 import { worldFor } from './game/physics'
 import { GAMES } from './games/registry'
+import { type MusicCue, musicAction, musicCue } from './audio/director'
+import { AudioEngine } from './audio/engine'
+import { parseManifest } from './audio/manifest'
+import { HybridMusic } from './audio/music'
+import { SynthMusic } from './audio/synth'
+import { TrackMusic } from './audio/tracks'
 import { applyStaticTranslations, t } from './i18n'
 import type { ViewMapping } from './pose/bodyColliders'
 import { type FramingState, initialFraming, updateFraming } from './pose/framing'
@@ -37,6 +43,39 @@ const canvas = document.getElementById('scene') as HTMLCanvasElement
 const ctx = canvas.getContext('2d')!
 const buildLabel = document.getElementById('build')!
 const hud = createHud()
+const audio = new AudioEngine()
+const music: HybridMusic = new HybridMusic(
+  new SynthMusic(audio),
+  new TrackMusic(audio, (mood) => music.trackFailed(mood)),
+  import.meta.env.BASE_URL,
+)
+const muteButton = document.getElementById('mute')!
+
+function syncMuteButton(): void {
+  const muted = audio.muted()
+  muteButton.setAttribute('aria-pressed', String(muted))
+  muteButton.title = t(muted ? 'actions.unmute' : 'actions.mute')
+  muteButton.setAttribute('aria-label', muteButton.title)
+}
+
+function toggleMute(): void {
+  audio.setMuted(!audio.muted())
+  syncMuteButton()
+}
+
+muteButton.addEventListener('click', toggleMute)
+syncMuteButton()
+
+/** Tracks are optional: without a manifest everything plays synthesized music. */
+async function loadMusicManifest(): Promise<void> {
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}music/manifest.json`)
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    music.setManifest(parseManifest(await response.json()))
+  } catch (error: unknown) {
+    console.warn('Music manifest unavailable; using synthesized music only', error)
+  }
+}
 
 applyStaticTranslations(document)
 buildLabel.textContent = __COMMIT_HASH__
@@ -52,6 +91,7 @@ canvas.addEventListener('pointerup', (e) => {
 })
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyF') return void handleFullscreen()
+  if (e.code === 'KeyM') return void toggleMute()
   const command = KEY_COMMANDS[e.code]
   if (command) pendingKeys = [...pendingKeys, command]
 })
@@ -149,6 +189,7 @@ function createPlayerFeed(tracker: PoseTracker): (mapping: ViewMapping, baseRadi
 function runLoop(tracker: PoseTracker): void {
   let session: Session = createSession(loadBests())
   let framing: FramingState = initialFraming
+  let cue: MusicCue | null = null
   let upperAnnounced = false
   let lastTime = performance.now()
   const playersFor = createPlayerFeed(tracker)
@@ -174,6 +215,11 @@ function runLoop(tracker: PoseTracker): void {
     pendingKeys = []
     pendingTaps = []
     session = step.session
+    const nextCue = musicCue(session, GAMES)
+    const action = musicAction(cue, nextCue)
+    if (action.kind === 'play') music.play(action.mood)
+    else if (action.kind === 'pause') music.pause()
+    cue = nextCue
     if (step.events.includes('gameOver')) localStorage.setItem(BESTS_KEY, JSON.stringify(session.bests))
 
     drawLetterbox(ctx, view.stage)
@@ -199,6 +245,9 @@ function runLoop(tracker: PoseTracker): void {
 }
 
 async function boot(): Promise<void> {
+  // Must run synchronously inside the click: browsers block audio started later.
+  audio.unlock()
+  void loadMusicManifest()
   hud.hideStartButton()
   try {
     await startCamera(video)

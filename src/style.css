@@ -305,11 +305,16 @@ body {
 
 /* ------------------------------------------------------------------ chrome */
 
-.corner-button {
+.corner-actions {
   position: absolute;
   top: max(1rem, env(safe-area-inset-top));
   right: max(1rem, env(safe-area-inset-right));
   z-index: 10;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.corner-button {
   display: grid;
   place-items: center;
   width: 3.5rem;
@@ -332,6 +337,15 @@ body {
 .corner-button svg {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+#mute .icon-sound-off,
+#mute[aria-pressed='true'] .icon-sound-on {
+  display: none;
+}
+
+#mute[aria-pressed='true'] .icon-sound-off {
+  display: block;
 }
 
 .toast {
