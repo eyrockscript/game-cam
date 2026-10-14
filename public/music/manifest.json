@@ -1,0 +1,7 @@
+{
+  "tracks": [
+    { "mood": "menu", "file": "menu-1.mp3" },
+    { "mood": "upbeat", "file": "upbeat-1.mp3" },
+    { "mood": "calm", "file": "calm-1.mp3" }
+  ]
+}
