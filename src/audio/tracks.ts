@@ -2,15 +2,30 @@ import type { Mood } from '../core/types'
 import type { AudioEngine } from './engine'
 import type { TrackPlayer } from './music'
 
-const FADE_S = 0.03
-const PAUSE_DELAY_MS = 60
+/** Time constant for gain ramps; ~5 constants (50 ms) reach silence. */
+const RAMP_S = 0.01
+/** Sources are stopped after their fade-out has effectively reached zero. */
+const STOP_DELAY_S = 0.06
 
-/** Loops one `<audio>` element per mood, routed through the engine so mute applies. */
+interface ActiveTrack {
+  mood: Mood
+  source: AudioBufferSourceNode
+  gain: GainNode
+  startedAt: number
+  duration: number
+}
+
+/**
+ * Loops a decoded AudioBuffer per mood, routed through the engine so mute applies.
+ * Decoding up front avoids `<audio>` pitfalls: interrupted play() promises,
+ * Range requests against the precache, and gesture-gated play() on iOS.
+ */
 export class TrackMusic implements TrackPlayer {
-  private readonly elements = new Map<Mood, HTMLAudioElement>()
-  private bus: GainNode | null = null
-  private active: HTMLAudioElement | null = null
-  private pauseTimer: number | undefined
+  private readonly buffers = new Map<string, Promise<AudioBuffer>>()
+  private readonly positions = new Map<Mood, number>()
+  private active: ActiveTrack | null = null
+  /** Bumped on every play()/pause() so late loads can tell they are stale. */
+  private token = 0
 
   constructor(
     private readonly engine: AudioEngine,
@@ -20,45 +35,76 @@ export class TrackMusic implements TrackPlayer {
   play(mood: Mood, url: string): void {
     const out = this.engine.output()
     if (!out) return
-    window.clearTimeout(this.pauseTimer)
-    const element = this.elementFor(mood, url, out.ctx, out.bus)
-    if (this.active && this.active !== element) this.active.pause()
-    this.active = element
-    this.bus!.gain.cancelScheduledValues(out.ctx.currentTime)
-    this.bus!.gain.setTargetAtTime(1, out.ctx.currentTime, FADE_S / 3)
-    element.play().catch((error: unknown) => {
-      console.warn(`Music track for "${mood}" could not play; using synthesized music`, error)
-      this.onError(mood)
-    })
+    const token = ++this.token
+    if (this.active?.mood === mood) {
+      this.rampTo(this.active.gain, 1, out.ctx.currentTime)
+      return
+    }
+    this.load(url, out.ctx).then(
+      (buffer) => {
+        if (token === this.token) this.start(mood, buffer, out.ctx, out.bus)
+      },
+      (error: unknown) => {
+        if (token !== this.token) return
+        console.warn(`Music track for "${mood}" failed to load; using synthesized music`, error)
+        this.onError(mood)
+      },
+    )
   }
 
   pause(): void {
+    this.token++
     const out = this.engine.output()
-    if (!out || !this.bus || !this.active) return
-    this.bus.gain.cancelScheduledValues(out.ctx.currentTime)
-    this.bus.gain.setTargetAtTime(0, out.ctx.currentTime, FADE_S / 3)
-    const element = this.active
-    window.clearTimeout(this.pauseTimer)
-    this.pauseTimer = window.setTimeout(() => element.pause(), PAUSE_DELAY_MS)
+    if (!out) return
+    this.stopActive(out.ctx.currentTime)
   }
 
-  private elementFor(mood: Mood, url: string, ctx: AudioContext, destination: AudioNode): HTMLAudioElement {
-    const existing = this.elements.get(mood)
-    if (existing) return existing
-    if (!this.bus) {
-      this.bus = ctx.createGain()
-      this.bus.gain.value = 0
-      this.bus.connect(destination)
+  private load(url: string, ctx: AudioContext): Promise<AudioBuffer> {
+    const cached = this.buffers.get(url)
+    if (cached) return cached
+    const promise = fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.arrayBuffer()
+      })
+      .then((data) => ctx.decodeAudioData(data))
+    // A failed load must not poison the cache: a later play() may retry.
+    promise.catch(() => this.buffers.delete(url))
+    this.buffers.set(url, promise)
+    return promise
+  }
+
+  private start(mood: Mood, buffer: AudioBuffer, ctx: AudioContext, destination: AudioNode): void {
+    const now = ctx.currentTime
+    this.stopActive(now)
+    const gain = ctx.createGain()
+    gain.gain.value = 0
+    gain.connect(destination)
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.loop = true
+    source.connect(gain)
+    source.onended = () => {
+      source.disconnect()
+      gain.disconnect()
     }
-    const element = new Audio(url)
-    element.loop = true
-    element.preload = 'auto'
-    element.addEventListener('error', () => {
-      console.warn(`Music track for "${mood}" failed to load; using synthesized music`, element.error)
-      this.onError(mood)
-    })
-    ctx.createMediaElementSource(element).connect(this.bus)
-    this.elements.set(mood, element)
-    return element
+    const offset = (this.positions.get(mood) ?? 0) % buffer.duration
+    source.start(now, offset)
+    this.rampTo(gain, 1, now)
+    this.active = { mood, source, gain, startedAt: now - offset, duration: buffer.duration }
+  }
+
+  private stopActive(now: number): void {
+    const active = this.active
+    if (!active) return
+    this.active = null
+    this.positions.set(active.mood, (now - active.startedAt) % active.duration)
+    this.rampTo(active.gain, 0, now)
+    active.source.stop(now + STOP_DELAY_S)
+  }
+
+  private rampTo(gain: GainNode, value: number, now: number): void {
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setTargetAtTime(value, now, RAMP_S)
   }
 }
