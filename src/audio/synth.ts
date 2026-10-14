@@ -108,6 +108,12 @@ export class SynthMusic implements MusicSource {
     if (!this.mood) return
     const pattern = PATTERNS[this.mood]
     const stepSeconds = 60 / pattern.bpm / 4
+    // A busy main thread delays ticks; drop the missed steps instead of firing them all at once.
+    if (this.nextTime < ctx.currentTime) {
+      const missed = Math.ceil((ctx.currentTime - this.nextTime) / stepSeconds)
+      this.nextTime += missed * stepSeconds
+      this.step = (this.step + missed) % STEPS
+    }
     while (this.nextTime < ctx.currentTime + LOOKAHEAD_S) {
       this.schedule(ctx, pattern, this.step, this.nextTime, stepSeconds)
       this.nextTime += stepSeconds
