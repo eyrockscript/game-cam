@@ -5,7 +5,8 @@ import type { MusicSource } from './music'
 /** Four bars of sixteenth notes. */
 const STEPS = 64
 const STEPS_PER_BAR = 16
-const LOOKAHEAD_S = 0.12
+/** Generous so a busy main thread (late timer ticks) still gets every note scheduled in time. */
+const LOOKAHEAD_S = 0.3
 const TICK_MS = 25
 const FADE_S = 0.03
 
