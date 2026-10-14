@@ -18,13 +18,19 @@ const random = () => 0 // shortest dance: 5 s
 /** A standing player shifted `dx` px right (NEAR: shoulder width = 240 px). */
 const at = (id: number, dx = 0, base = NEAR): Player => player(id, place(standing(), { ...base, x: base.x + dx }))
 
-function run(state: StatuesState, frames: Player[][], dt: number): { state: StatuesState; events: string[]; finished: boolean } {
-  return frames.reduce(
+interface RunResult {
+  state: StatuesState
+  events: string[]
+  finished: boolean
+}
+
+function run(state: StatuesState, frames: Player[][], dt: number): RunResult {
+  return frames.reduce<RunResult>(
     (acc, players) => {
       const r = statuesGame.step(acc.state, { players, dt, now: 0 }, world, random)
       return { state: r.state, events: [...acc.events, ...r.events], finished: r.finished }
     },
-    { state, events: [] as string[], finished: false },
+    { state, events: [], finished: false },
   )
 }
 

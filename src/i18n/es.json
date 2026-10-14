@@ -36,6 +36,10 @@
       "title": "Esquiva",
       "description": "Que ninguna roca los toque"
     },
+    "statues": {
+      "title": "Estatuas",
+      "description": "Bailen con la música y congélense cuando pare"
+    },
     "workout": {
       "title": "Rutina",
       "description": "Ejercicio guiado: cuenta tus repeticiones"
@@ -72,6 +76,13 @@
         "instruction": "Junta las manos al frente y abre los brazos a los lados"
       }
     }
+  },
+  "statues": {
+    "dance": "¡Bailen!",
+    "freeze": "¡Congelados!",
+    "moved": "¡Te moviste!",
+    "safe": "¡Nadie se movió!",
+    "caught": "¡Alguien se movió!"
   },
   "messages": {
     "installForFullscreen": "Este navegador no permite pantalla completa. Toca Compartir y luego \"Agregar a inicio\", y abre el juego desde ese ícono.",

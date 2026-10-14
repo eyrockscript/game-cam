@@ -4,7 +4,7 @@
  */
 import { COLORS } from './theme'
 
-export type IconId = 'ball' | 'bubbles' | 'blade' | 'rock' | 'workout' | 'home' | 'replay'
+export type IconId = 'ball' | 'bubbles' | 'blade' | 'rock' | 'workout' | 'home' | 'replay' | 'snowflake' | 'pose'
 
 type IconPainter = (ctx: CanvasRenderingContext2D, s: number, color: string) => void
 
@@ -101,6 +101,40 @@ const PAINTERS: Readonly<Record<IconId, IconPainter>> = {
     ctx.lineTo(s * 0.4, -s * 0.12)
     ctx.stroke()
   },
+  snowflake: (ctx, s) => {
+    for (let i = 0; i < 3; i += 1) {
+      ctx.save()
+      ctx.rotate((i * Math.PI) / 3)
+      ctx.beginPath()
+      ctx.moveTo(0, -s * 0.38)
+      ctx.lineTo(0, s * 0.38)
+      for (const end of [-1, 1]) {
+        ctx.moveTo(0, end * s * 0.24)
+        ctx.lineTo(-s * 0.1, end * s * 0.34)
+        ctx.moveTo(0, end * s * 0.24)
+        ctx.lineTo(s * 0.1, end * s * 0.34)
+      }
+      ctx.stroke()
+      ctx.restore()
+    }
+  },
+  pose: (ctx, s, color) => {
+    circle(ctx, 0, -s * 0.28, s * 0.09)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(0, -s * 0.16)
+    ctx.lineTo(0, s * 0.14)
+    ctx.moveTo(-s * 0.36, -s * 0.38)
+    ctx.lineTo(-s * 0.18, -s * 0.08)
+    ctx.lineTo(s * 0.18, -s * 0.08)
+    ctx.lineTo(s * 0.36, -s * 0.38)
+    ctx.moveTo(0, s * 0.14)
+    ctx.lineTo(-s * 0.16, s * 0.4)
+    ctx.moveTo(0, s * 0.14)
+    ctx.lineTo(s * 0.16, s * 0.4)
+    ctx.stroke()
+  },
 }
 
 export function drawIcon(
@@ -129,6 +163,8 @@ export function iconForGame(gameId: string): IconId {
     ninja: 'blade',
     dodge: 'rock',
     workout: 'workout',
+    statues: 'snowflake',
+    copyPose: 'pose',
   }
   return byGame[gameId] ?? 'ball'
 }
