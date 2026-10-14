@@ -45,8 +45,13 @@ export const FREEZE_SHRINK_SECONDS = 0.1
 /** Lets people finish their last dance move once the music stops. */
 export const GRACE_SECONDS = 0.5
 export const RESULT_SECONDS = 1.2
-/** Accumulated shoulder widths of movement that count as "moved". Tune with real captures. */
-export const MOVE_THRESHOLD = 0.6
+/**
+ * Accumulated shoulder widths of movement that count as "moved". Motion is
+ * averaged over all visible joints, which dilutes a single moving arm: a
+ * 2 sw/s arm wave over 2.5 s at 30 fps detections accumulates only ~0.58.
+ * Provisional value pending real captures.
+ */
+export const MOVE_THRESHOLD = 0.4
 /** Per-frame displacements below this (in shoulder widths) are model noise. */
 export const JITTER = 0.02
 
@@ -121,6 +126,8 @@ function stepFreeze(s: StatuesState, input: FrameInput, previous: StatuesState['
   const labels = labelsFor(movers, input.players)
   if (s.phaseLeft > 0) return keep({ ...s, motion, labels }, events)
   const caught = movers.length > 0
+  // Only players still in view at the end can be judged still; one who left neither scores nor moved.
+  const frozen = s.judged.filter((id) => !movers.includes(id) && input.players.some((p) => p.id === id)).length
   return keep(
     {
       ...s,
@@ -131,7 +138,7 @@ function stepFreeze(s: StatuesState, input: FrameInput, previous: StatuesState['
       labels,
       caught,
       lives: caught ? s.lives - 1 : s.lives,
-      score: s.score + s.judged.length - movers.length,
+      score: s.score + frozen,
       round: s.round + 1,
       freezeSeconds: Math.max(FREEZE_MIN_SECONDS, s.freezeSeconds - FREEZE_SHRINK_SECONDS),
     },

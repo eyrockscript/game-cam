@@ -120,6 +120,15 @@ describe('statues', () => {
     expect(r.state.score).toBe(1)
   })
 
+  it('scores only judged players still in view at the end of the freeze', () => {
+    const both = repeat([at(1), at(2, 0, FAR)], FREEZE_FRAMES / 2)
+    const alone = repeat([at(1)], FREEZE_FRAMES / 2)
+    const r = run(frozen([at(1), at(2, 0, FAR)]), [...both, ...alone], 0.125)
+    expect(r.events).toEqual(['safe'])
+    expect(r.state.score).toBe(1)
+    expect(r.state.lives).toBe(INITIAL_LIVES)
+  })
+
   it('dances again after the result and shortens the next freeze', () => {
     const afterFreeze = run(frozen([at(1)]), repeat([at(1)], FREEZE_FRAMES), 0.125).state
     expect(afterFreeze.freezeSeconds).toBeCloseTo(FREEZE_START_SECONDS - 0.1)
