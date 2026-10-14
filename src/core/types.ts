@@ -47,6 +47,13 @@ export interface FrameInput {
   readonly dt: number
   /** Monotonic timestamp in ms. */
   readonly now: number
+  /** Camera framing; absent means 'full'. */
+  readonly framing?: Framing
+}
+
+/** What a game may know about the room when a round starts. */
+export interface StartContext {
+  readonly framing: Framing
 }
 
 export interface GameStatus {
@@ -72,7 +79,7 @@ export interface MiniGame<S> {
   /** i18n keys (see src/i18n/es.json → games.<id>.title / .description). */
   readonly titleKey: string
   readonly descriptionKey: string
-  start(world: World, random: () => number): S
+  start(world: World, random: () => number, context?: StartContext): S
   step(state: S, input: FrameInput, world: World, random: () => number): StepResult<S>
   render(ctx: CanvasRenderingContext2D, state: S, world: World): void
   status(state: S): GameStatus

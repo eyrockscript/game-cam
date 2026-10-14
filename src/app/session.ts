@@ -120,7 +120,7 @@ function stepCountdown(
   const msLeft = session.screen.msLeft - input.dt * 1000
   const { gameIndex } = session.screen
   if (msLeft > 0) return { ...session, screen: { kind: 'countdown', gameIndex, msLeft, menuHover } }
-  const state = games[gameIndex].start(world, random)
+  const state = games[gameIndex].start(world, random, { framing: input.framing ?? 'full' })
   return { ...session, screen: { kind: 'playing', gameIndex, state, menuHover: null } }
 }
 

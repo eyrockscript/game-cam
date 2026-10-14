@@ -105,3 +105,37 @@ describe('round lifecycle', () => {
     expect(run(over, 1, input(), tap(menu)).screen.kind).toBe('menu')
   })
 })
+
+describe('framing', () => {
+  it('passes the current framing to the game start', () => {
+    const seen: string[] = []
+    const probe: MiniGame<{ n: number }> = {
+      ...counter,
+      id: 'probe',
+      start: (_world, _random, context) => {
+        seen.push(context?.framing ?? 'none')
+        return { n: 0 }
+      },
+    }
+    const list = [probe] as readonly AnyMiniGame[]
+    const counting = stepSession(createSession({}), list, input(), world, keys('confirm')).session
+    stepSession(counting, list, { ...input([], COUNTDOWN_MS / 1000), framing: 'upper' }, world)
+    expect(seen).toEqual(['upper'])
+  })
+
+  it('defaults to full body when the input has no framing', () => {
+    const seen: string[] = []
+    const probe: MiniGame<{ n: number }> = {
+      ...counter,
+      id: 'probe',
+      start: (_world, _random, context) => {
+        seen.push(context?.framing ?? 'none')
+        return { n: 0 }
+      },
+    }
+    const list = [probe] as readonly AnyMiniGame[]
+    const counting = stepSession(createSession({}), list, input(), world, keys('confirm')).session
+    stepSession(counting, list, input([], COUNTDOWN_MS / 1000), world)
+    expect(seen).toEqual(['full'])
+  })
+})
