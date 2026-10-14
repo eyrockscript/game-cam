@@ -4,6 +4,7 @@
  * Kept light so the person stays visible underneath.
  */
 import type { JointName, Player } from '../core/types'
+import type { World } from '../game/physics'
 import { COLORS } from './theme'
 
 const BONES: readonly (readonly [JointName, JointName])[] = [
@@ -78,8 +79,9 @@ function drawHands(ctx: CanvasRenderingContext2D, player: Player, u: number): vo
   ctx.restore()
 }
 
-export function renderPlayers(ctx: CanvasRenderingContext2D, players: readonly Player[]): void {
-  const u = Math.min(ctx.canvas.width, ctx.canvas.height)
+/** `world` is the stage size, so drawn hands match collider sizes when letterboxed. */
+export function renderPlayers(ctx: CanvasRenderingContext2D, players: readonly Player[], world: World): void {
+  const u = Math.min(world.width, world.height)
   for (const player of players) {
     drawSkeleton(ctx, player, u)
     drawHands(ctx, player, u)

@@ -64,10 +64,13 @@ function syncFullscreenButton(): void {
   fullscreenButton.hidden = isFullscreen() || isStandalone()
 }
 
+let toastTimer: number | undefined
+
 function showToast(text: string): void {
   toast.textContent = text
   toast.hidden = false
-  window.setTimeout(() => (toast.hidden = true), TOAST_MS)
+  window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => (toast.hidden = true), TOAST_MS)
 }
 
 async function handleFullscreen(): Promise<void> {
@@ -90,7 +93,10 @@ function resizeCanvas(): void {
 
 /** Taps are collected in canvas pixels; games live in stage coordinates. */
 function toStage(points: readonly Point[], stage: Stage): Point[] {
-  return points.map((p) => ({ x: p.x - stage.x, y: p.y - stage.y }))
+  // Taps on the letterbox bars are outside the play area and are dropped.
+  return points
+    .map((p) => ({ x: p.x - stage.x, y: p.y - stage.y }))
+    .filter((p) => p.x >= 0 && p.y >= 0 && p.x <= stage.width && p.y <= stage.height)
 }
 
 function loadBests():Record<string, number> {
@@ -143,6 +149,7 @@ function createPlayerFeed(tracker: PoseTracker): (mapping: ViewMapping, baseRadi
 function runLoop(tracker: PoseTracker): void {
   let session: Session = createSession(loadBests())
   let framing: FramingState = initialFraming
+  let upperAnnounced = false
   let lastTime = performance.now()
   const playersFor = createPlayerFeed(tracker)
 
@@ -154,7 +161,11 @@ function runLoop(tracker: PoseTracker): void {
     const players = playersFor(view.mapping, Math.min(world.width, world.height) * 0.035)
 
     const nextFraming = updateFraming(framing, players, dt * 1000)
-    if (nextFraming.framing === 'upper' && framing.framing === 'full') showToast(t('messages.upperBody'))
+    // Announced once per session: groups stepping back and forth would otherwise repeat it.
+    if (nextFraming.framing === 'upper' && !upperAnnounced) {
+      upperAnnounced = true
+      showToast(t('messages.upperBody'))
+    }
     framing = nextFraming
 
     const input = { players, dt, now, framing: framing.framing }
@@ -172,7 +183,7 @@ function runLoop(tracker: PoseTracker): void {
     ctx.rect(0, 0, view.stage.width, view.stage.height)
     ctx.clip()
     drawMirroredVideo(ctx, video, view.mapping, view.stage)
-    renderPlayers(ctx, players)
+    renderPlayers(ctx, players, world)
     renderSession(ctx, session, GAMES, world, now)
     ctx.restore()
 

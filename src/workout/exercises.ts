@@ -118,6 +118,7 @@ export const PUNCH_OUT_SHOULDERS = 1.1
 export const PUNCH_BACK_SHOULDERS = 0.6
 export const PUNCH_LEVEL_SHOULDERS = 0.5
 export const ARMS_OPEN_SHOULDERS = 2.2
+/** Below shoulder width on purpose: arms hanging at the sides read ~1.1, which must not count as closed. */
 export const ARMS_CLOSED_SHOULDERS = 0.8
 
 /**
