@@ -38,6 +38,7 @@ camera ──► MoveNet MultiPose (TF.js, WebGL) ──► player tracker ─�
 - **Pose detection.** [MoveNet MultiPose Lightning](https://www.tensorflow.org/hub/tutorials/movenet) runs on the GPU through TensorFlow.js. The input size is raised to 512 px so that 5 people across a 16:9 frame still get accurate wrists. MediaPipe Pose was tried first, but it found 0 of 5 people in the same scene.
 - **Tracking.** Poses are matched frame to frame by torso position, so each person keeps the same color. Hand velocity is measured between camera frames, not screen frames, so a fast swing really does hit harder.
 - **Hands.** The model has no palm keypoint. The palm is estimated by extending the forearm (elbow → wrist) by 35%.
+- **Small rooms.** The camera is zoomed out to its widest when it supports zoom. When the screen's shape differs a lot from the camera's (for example a 16:9 webcam on a portrait screen), the full camera picture is shown with bars instead of cropping, and the games are played inside it. Hit areas scale with each person's shoulder width, so someone close to the camera has bigger hands than someone far away.
 - **Recovery.** The GPU context can be lost, for example when macOS switches GPUs as you plug in an HDMI TV. When that happens the detector rebuilds itself in about a second instead of silently going blind.
 - **Games.** Every mini-game implements one small contract (`start`, `step`, `render`, `status`). `step` is a pure function, so game rules are unit-tested without a browser.
 - **Offline PWA.** The model (9.3 MB), the font and every asset are precached by a service worker. After the first visit the app works without a network and can be installed to a phone's home screen.
@@ -61,7 +62,7 @@ pnpm build      # type-check + production build in dist/
 
 1. Open the app on a laptop, or on a phone that has the app installed.
 2. Send the screen to the TV over HDMI, AirPlay or Chromecast.
-3. Put the camera at about chest height, 2–3 m from the players. Everyone should be visible head to toe.
+3. Put the camera at about chest height. From 2–3 m everyone is visible head to toe. In a small room, half a body is enough: when nobody's legs are visible for a second, the app switches to half-body mode and the workout uses arm exercises only (arm raises, side punches, arm openers).
 
 Smart TV browsers rarely allow camera access, so the camera and the processing run on the laptop or phone.
 
