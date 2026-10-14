@@ -1,5 +1,5 @@
 import type { MiniGame } from '../core/types'
-import { blockAt } from '../workout/routine'
+import { blockAt, routineFor } from '../workout/routine'
 import { renderWorkout } from '../workout/render'
 import { type WorkoutState, advance, initialState } from '../workout/state'
 
@@ -8,7 +8,7 @@ export const workoutGame: MiniGame<WorkoutState> = {
   id: 'workout',
   titleKey: 'games.workout.title',
   descriptionKey: 'games.workout.description',
-  start: () => initialState(),
+  start: (_world, _random, context) => initialState(routineFor(context?.framing ?? 'full')),
   step: (state, input) => advance(state, input.players, input.dt),
   render: renderWorkout,
   status: (state) => ({

@@ -3,7 +3,7 @@ import type { FrameInput, Player } from '../core/types'
 import { worldFor } from '../game/physics'
 import { workoutGame } from '../games/workout'
 import { FAR, NEAR, armsUp, place, player, squatDown, standing, without } from './__fixtures__/skeleton'
-import { DEFAULT_ORDER, blockAt, buildRoutine, totalSeconds } from './routine'
+import { DEFAULT_ORDER, UPPER_BODY_ORDER, blockAt, buildRoutine, totalSeconds } from './routine'
 import { POP_DURATION_MS, type WorkoutState, advance, headAnchor, initialState, repsOf } from './state'
 
 const world = worldFor(1920, 1080)
@@ -110,5 +110,18 @@ describe('headAnchor', () => {
     const noFace = place(without(standing(), 'nose'))
     expect(headAnchor(player(1, noFace))).toEqual({ x: 900, y: 150 })
     expect(headAnchor(player(1, {}))).toBeNull()
+  })
+})
+
+describe('routine selection', () => {
+  const exercises = (s: WorkoutState) => s.routine.flatMap((b) => (b.kind === 'exercise' ? [b.exerciseId] : []))
+
+  it('uses the full-body routine by default', () => {
+    expect(exercises(workoutGame.start(world, random))).toEqual([...DEFAULT_ORDER])
+    expect(exercises(workoutGame.start(world, random, { framing: 'full' }))).toEqual([...DEFAULT_ORDER])
+  })
+
+  it('uses only upper-body exercises when legs are out of view', () => {
+    expect(exercises(workoutGame.start(world, random, { framing: 'upper' }))).toEqual([...UPPER_BODY_ORDER])
   })
 })

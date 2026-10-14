@@ -1,3 +1,4 @@
+import type { Framing } from '../core/types'
 import type { ExerciseId } from './exercises'
 
 export type Block =
@@ -18,6 +19,13 @@ export interface BlockPosition {
 export const EXERCISE_SECONDS = 30
 export const REST_SECONDS = 10
 export const DEFAULT_ORDER: readonly ExerciseId[] = ['squats', 'jumpingJacks', 'highKnees', 'armRaises']
+
+/** For small rooms: nothing here needs hips, knees or ankles. */
+export const UPPER_BODY_ORDER: readonly ExerciseId[] = ['armRaises', 'sidePunches', 'armOpeners']
+
+export function routineFor(framing: Framing): Routine {
+  return buildRoutine(framing === 'upper' ? UPPER_BODY_ORDER : DEFAULT_ORDER)
+}
 
 /** Builds [exercise → rest(next)] → ... → last exercise (no trailing rest). */
 export function buildRoutine(
