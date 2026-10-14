@@ -17,7 +17,8 @@
 | ![Ninja](docs/screenshots/06-ninja.jpg) | ![Dodge](docs/screenshots/07-dodge.jpg) |
 | **Ninja.** Slice the fruit with fast hand movements and keep your hands away from the bombs. | **Esquiva (dodge).** A marker warns where each rock will fall. Nobody on the team can get hit. |
 | ![Workout](docs/screenshots/08-workout.jpg) | ![Results](docs/screenshots/09-results.jpg) |
-| **Rutina (workout).** A guided routine of squats, jumping jacks, high knees and arm raises. Reps are counted for each person, shown above their head in their color. | **Results.** Each game keeps its own best score. Replay or go back to the menu with your hand. |
+| **Estatuas (statues).** Dance while the music plays. When it stops, freeze: anyone who moves costs the team a life and gets called out in their color. | **Copia la pose (copy the pose).** A figure shows an arm pose; copy it and hold it for a second. It only uses the upper body, so it works in small rooms. |
+| **Rutina (workout).** A guided routine of squats, jumping jacks, high knees and arm raises (arm-only exercises in small rooms). Reps are counted for each person, shown above their head in their color. | **Results.** Each game keeps its own best score. Replay or go back to the menu with your hand. |
 
 All games are co-op: everyone in front of the camera adds to the same score.
 
@@ -25,7 +26,7 @@ All games are co-op: everyone in front of the camera adds to the same score.
 
 - **Hand hold:** hold a hand over a tile for about 1 second to pick it. To leave a game, hold the in-game *Menú* tile for 2 seconds, which avoids leaving by accident.
 - **Touch or mouse:** tap any tile.
-- **TV remote or keyboard:** arrows and Enter to move and select, Esc or Backspace to go back to the menu, `F` for fullscreen.
+- **TV remote or keyboard:** arrows and Enter to move and select, Esc or Backspace to go back to the menu, `F` for fullscreen, `M` to mute the music.
 
 ## How it works
 
@@ -46,6 +47,10 @@ camera ──► MoveNet MultiPose (TF.js, WebGL) ──► player tracker ─�
 ### Privacy
 
 All detection runs locally in the browser. No video, image or pose data is sent anywhere. The only network requests are for the app's own static files.
+
+## Music
+
+Every screen has background music. Three CC0 tracks from OpenGameArt play by default (credits in [`public/music/LICENSES.md`](public/music/LICENSES.md)). When a track is missing or fails to load, a loop synthesized in the browser with the Web Audio API plays instead, so music works offline either way. Statues stops the music to signal the freeze. Mute with the speaker button or the `M` key; the choice is remembered.
 
 ## Getting started
 
