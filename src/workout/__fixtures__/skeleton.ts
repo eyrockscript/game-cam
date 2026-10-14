@@ -74,3 +74,23 @@ export function without(pose: Pose, ...names: JointName[]): Pose {
 export function player(id: number, joints: Joints, color = '#ff7a1a'): Player {
   return { id, color, joints, colliders: [], hands: [], head: null }
 }
+
+/** One arm stretched out to its own side at shoulder height, `reach` body units past the shoulder. */
+export function sidePunch(side: 'left' | 'right', reach = 1): Pose {
+  return side === 'left'
+    ? { ...STANDING, leftElbow: [0.4 + reach / 2, 0], leftWrist: [0.4 + reach, 0] }
+    : { ...STANDING, rightElbow: [-0.4 - reach / 2, 0], rightWrist: [-0.4 - reach, 0] }
+}
+
+/** Both wrists at chest height, `halfWidth` body units from the center. */
+export function armSpread(halfWidth: number): Pose {
+  return { ...STANDING, leftWrist: [halfWidth, 0.3], rightWrist: [-halfWidth, 0.3] }
+}
+
+export const armsClosed = (): Pose => armSpread(0.15)
+export const armsOpen = (): Pose => armSpread(1.3)
+
+/** What a camera sees in a small room: no hips, knees or ankles. */
+export function upperOnly(pose: Pose): Pose {
+  return without(pose, 'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle')
+}

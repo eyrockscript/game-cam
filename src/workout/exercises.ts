@@ -114,7 +114,47 @@ export function classifyKnee(side: 'left' | 'right'): (joints: Joints) => Readin
   }
 }
 
-export type ExerciseId = 'squats' | 'jumpingJacks' | 'highKnees' | 'armRaises'
+export const PUNCH_OUT_SHOULDERS = 1.1
+export const PUNCH_BACK_SHOULDERS = 0.6
+export const PUNCH_LEVEL_SHOULDERS = 0.5
+export const ARMS_OPEN_SHOULDERS = 2.2
+export const ARMS_CLOSED_SHOULDERS = 0.8
+
+/**
+ * One arm punching out to its own side at shoulder height. Forward punches are
+ * not used: a single 2D camera can't see an arm extending toward the lens.
+ */
+export function classifySidePunch(side: 'left' | 'right'): (joints: Joints) => Reading {
+  return (joints) => {
+    const body = reliableAll(joints, ['leftShoulder', 'rightShoulder'] as const)
+    const wrist = reliable(joints, side === 'left' ? 'leftWrist' : 'rightWrist')
+    if (!body || !wrist) return null
+    const width = distance(body.leftShoulder, body.rightShoulder)
+    if (width === 0) return null
+    const shoulder = side === 'left' ? body.leftShoulder : body.rightShoulder
+    const other = side === 'left' ? body.rightShoulder : body.leftShoulder
+    const outward = Math.sign(shoulder.x - other.x)
+    const reach = ((wrist.x - shoulder.x) * outward) / width
+    const level = Math.abs(wrist.y - shoulder.y) / width
+    if (reach > PUNCH_OUT_SHOULDERS && level < PUNCH_LEVEL_SHOULDERS) return 'active'
+    if (Math.abs(wrist.x - shoulder.x) / width < PUNCH_BACK_SHOULDERS) return 'rest'
+    return null
+  }
+}
+
+/** 'active' = wrists spread wide, 'rest' = wrists together in front of the chest. */
+export function classifyArmOpener(joints: Joints): Reading {
+  const j = reliableAll(joints, ['leftShoulder', 'rightShoulder', 'leftWrist', 'rightWrist'] as const)
+  if (!j) return null
+  const width = distance(j.leftShoulder, j.rightShoulder)
+  if (width === 0) return null
+  const spread = distance(j.leftWrist, j.rightWrist) / width
+  if (spread > ARMS_OPEN_SHOULDERS) return 'active'
+  if (spread < ARMS_CLOSED_SHOULDERS) return 'rest'
+  return null
+}
+
+export type ExerciseId = 'squats' | 'jumpingJacks' | 'highKnees' | 'armRaises' | 'sidePunches' | 'armOpeners'
 
 function exercise(id: ExerciseId, channels: readonly Channel[]): Exercise {
   return { id, nameKey: `workout.exercises.${id}.name`, instructionKey: `workout.exercises.${id}.instruction`, channels }
@@ -129,6 +169,11 @@ export const EXERCISES: Readonly<Record<ExerciseId, Exercise>> = {
     { classify: classifyKnee('right'), countOn: 'enter' },
   ]),
   armRaises: exercise('armRaises', [{ classify: classifyArmsUp, countOn: 'exit' }]),
+  sidePunches: exercise('sidePunches', [
+    { classify: classifySidePunch('left'), countOn: 'enter' },
+    { classify: classifySidePunch('right'), countOn: 'enter' },
+  ]),
+  armOpeners: exercise('armOpeners', [{ classify: classifyArmOpener, countOn: 'exit' }]),
 }
 
 export function initialTracker(ex: Exercise): Tracker {

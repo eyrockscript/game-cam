@@ -4,6 +4,9 @@ import {
   NEAR,
   type Placement,
   arms,
+  armSpread,
+  armsClosed,
+  armsOpen,
   armsUp,
   jack,
   jackOpen,
@@ -11,8 +14,10 @@ import {
   kneeAngle,
   kneeRaised,
   place,
+  sidePunch,
   squatDown,
   standing,
+  upperOnly,
   without,
 } from './__fixtures__/skeleton'
 import { EXERCISES, type ExerciseId, type Tracker, initialTracker, updateTracker } from './exercises'
@@ -117,12 +122,55 @@ describe('arm raises', () => {
   })
 })
 
+describe('side punches', () => {
+  it('counts each punch of either arm', () => {
+    const frames = [standing(), sidePunch('left'), standing(), sidePunch('right'), standing()]
+    expect(run('sidePunches', at(frames)).reps).toBe(2)
+  })
+
+  it('ignores an arm stretched out far below shoulder height', () => {
+    const low = { ...standing(), leftWrist: [1.5, 1] as const }
+    expect(run('sidePunches', at([standing(), low, standing()])).reps).toBe(0)
+  })
+
+  it('does not double count an arm hovering between the thresholds', () => {
+    const frames = [standing(), sidePunch('left'), sidePunch('left', 0.7), sidePunch('left'), standing()]
+    expect(run('sidePunches', at(frames)).reps).toBe(1)
+  })
+
+  it('works without legs in view', () => {
+    const frames = [standing(), sidePunch('left'), standing()].map(upperOnly)
+    expect(run('sidePunches', at(frames)).reps).toBe(1)
+  })
+})
+
+describe('arm openers', () => {
+  it('counts closed, open, closed as one rep', () => {
+    expect(run('armOpeners', at([armsClosed(), armsOpen(), armsClosed()])).reps).toBe(1)
+  })
+
+  it('needs the arms brought together again to count', () => {
+    expect(run('armOpeners', at([armsClosed(), armsOpen(), standing()])).reps).toBe(0)
+  })
+
+  it('ignores jitter in the in-between zone', () => {
+    const frames = [armsClosed(), armsOpen(), armSpread(0.7), armsOpen(), armSpread(0.6), armsClosed()]
+    expect(run('armOpeners', at(frames)).reps).toBe(1)
+  })
+
+  it('works without legs in view', () => {
+    expect(run('armOpeners', at([armsClosed(), armsOpen(), armsClosed()].map(upperOnly))).reps).toBe(1)
+  })
+})
+
 describe('scale invariance', () => {
   const sequences: Record<ExerciseId, ReturnType<typeof standing>[]> = {
     squats: [standing(), squatDown(), standing(), squatDown(), standing()],
     jumpingJacks: [standing(), jackOpen(), standing(), jackOpen(), standing()],
     highKnees: [standing(), kneeRaised('left'), standing(), kneeRaised('right'), standing()],
     armRaises: [standing(), armsUp(), standing(), armsUp(), standing()],
+    sidePunches: [standing(), sidePunch('left'), standing(), sidePunch('right'), standing()],
+    armOpeners: [armsClosed(), armsOpen(), armsClosed(), armsOpen(), armsClosed()],
   }
 
   for (const id of Object.keys(sequences) as ExerciseId[]) {

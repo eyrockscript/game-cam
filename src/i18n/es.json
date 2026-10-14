@@ -60,6 +60,14 @@
       "armRaises": {
         "name": "Brazos arriba",
         "instruction": "Sube ambos brazos sobre la cabeza y bájalos"
+      },
+      "sidePunches": {
+        "name": "Golpes laterales",
+        "instruction": "Lanza un golpe hacia un lado a la altura del hombro y regresa"
+      },
+      "armOpeners": {
+        "name": "Aperturas de brazos",
+        "instruction": "Junta las manos al frente y abre los brazos a los lados"
       }
     }
   },
