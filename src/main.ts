@@ -251,7 +251,26 @@ function runLoop(tracker: PoseTracker): void {
   requestAnimationFrame(frame)
 }
 
+let booted = false
+
+/**
+ * The service worker (autoUpdate) installs a new deploy in the background and
+ * takes control of this page. Reload once so players get the new version now
+ * instead of on their next visit, but only before the camera starts: never
+ * interrupt a session. The first install (no previous controller) needs no reload.
+ */
+function reloadOnUpdate(): void {
+  if (!('serviceWorker' in navigator)) return
+  const hadController = navigator.serviceWorker.controller !== null
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !booted) window.location.reload()
+  })
+}
+
+reloadOnUpdate()
+
 async function boot(): Promise<void> {
+  booted = true
   // Must run synchronously inside the click: browsers block audio started later.
   audio.unlock()
   void loadMusicManifest()
