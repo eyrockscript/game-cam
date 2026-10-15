@@ -1,6 +1,6 @@
 const MUTED_KEY = 'game-cam.muted'
 /** Music sits under the game: loud enough to dance to, quiet enough to talk over. */
-const MASTER_VOLUME = 0.5
+const MASTER_VOLUME = 0.8
 const MUTE_RAMP_S = 0.02
 
 /** Owns the AudioContext. Browsers only allow starting it from a user gesture: call unlock() in a click handler. */
