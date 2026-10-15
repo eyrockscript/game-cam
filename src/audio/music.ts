@@ -1,5 +1,5 @@
 import type { Mood } from '../core/types'
-import { EMPTY_MANIFEST, type TrackManifest, trackUrl } from './manifest'
+import { EMPTY_MANIFEST, type TrackManifest, trackUrl, trackUrls } from './manifest'
 
 /** Something that can loop music for a mood. `play` on the current mood resumes it. */
 export interface MusicSource {
@@ -11,6 +11,8 @@ export interface MusicSource {
 export interface TrackPlayer {
   play(mood: Mood, url: string): void
   pause(): void
+  /** Starts fetching/decoding in the background so a later play() is instant. */
+  preload(url: string): void
 }
 
 /**
@@ -31,6 +33,8 @@ export class HybridMusic implements MusicSource {
 
   setManifest(manifest: TrackManifest): void {
     this.manifest = manifest
+    // Decoding takes seconds on slow devices; without this, each game starts in silence.
+    for (const url of trackUrls(manifest, this.baseUrl)) this.tracks.preload(url)
     // A manifest that arrives after the first cue switches the current mood from synth to its track.
     if (this.playing && this.current) this.play(this.current)
   }

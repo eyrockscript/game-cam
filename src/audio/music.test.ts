@@ -9,6 +9,7 @@ function fakes() {
   const tracks: TrackPlayer = {
     play: (m: Mood, url: string) => calls.push(`tracks.play:${m}:${url}`),
     pause: () => calls.push('tracks.pause'),
+    preload: (url: string) => calls.push(`tracks.preload:${url}`),
   }
   return { calls, synth, tracks }
 }
@@ -26,6 +27,7 @@ describe('HybridMusic', () => {
     const { calls, synth, tracks } = fakes()
     const music = new HybridMusic(synth, tracks, '/')
     music.setManifest(manifest)
+    calls.length = 0
     music.play('upbeat')
     expect(calls).toEqual(['synth.pause', 'tracks.play:upbeat:/music/upbeat-1.mp3'])
   })
@@ -45,13 +47,14 @@ describe('HybridMusic', () => {
     music.pause()
     calls.length = 0
     music.setManifest(manifest)
-    expect(calls).toEqual([])
+    expect(calls.filter((c) => !c.startsWith('tracks.preload'))).toEqual([])
   })
 
   it('falls back to synth for moods without a track', () => {
     const { calls, synth, tracks } = fakes()
     const music = new HybridMusic(synth, tracks, '/')
     music.setManifest(manifest)
+    calls.length = 0
     music.play('calm')
     expect(calls).toEqual(['tracks.pause', 'synth.play:calm'])
   })
@@ -84,5 +87,12 @@ describe('HybridMusic', () => {
     const { calls, synth, tracks } = fakes()
     new HybridMusic(synth, tracks, '/').pause()
     expect(calls).toEqual(['synth.pause', 'tracks.pause'])
+  })
+
+  it('preloads every listed track as soon as the manifest arrives', () => {
+    const { calls, synth, tracks } = fakes()
+    const music = new HybridMusic(synth, tracks, '/')
+    music.setManifest(parseManifest({ tracks: [{ mood: 'menu', file: 'menu-1.mp3' }, { mood: 'upbeat', file: 'upbeat-1.mp3' }] }))
+    expect(calls).toEqual(['tracks.preload:/music/menu-1.mp3', 'tracks.preload:/music/upbeat-1.mp3'])
   })
 })

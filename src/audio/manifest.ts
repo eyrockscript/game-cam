@@ -34,8 +34,15 @@ export function parseManifest(raw: unknown): TrackManifest {
   return { tracks: raw.tracks.flatMap(toTrack) }
 }
 
+const fileUrl = (track: Track, baseUrl: string): string => `${baseUrl}music/${track.file}`
+
 /** URL of the first track for `mood`, or null to fall back to synthesized music. */
 export function trackUrl(manifest: TrackManifest, mood: Mood, baseUrl: string): string | null {
   const track = manifest.tracks.find((t) => t.mood === mood)
-  return track ? `${baseUrl}music/${track.file}` : null
+  return track ? fileUrl(track, baseUrl) : null
+}
+
+/** URLs of every listed track, in manifest order, without duplicates. */
+export function trackUrls(manifest: TrackManifest, baseUrl: string): string[] {
+  return [...new Set(manifest.tracks.map((t) => fileUrl(t, baseUrl)))]
 }

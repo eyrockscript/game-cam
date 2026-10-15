@@ -52,6 +52,12 @@ export class TrackMusic implements TrackPlayer {
     )
   }
 
+  preload(url: string): void {
+    const out = this.engine.output()
+    // Failures surface (and fall back to synth) when the track is actually played.
+    if (out) this.load(url, out.ctx).catch(() => undefined)
+  }
+
   pause(): void {
     this.token++
     const out = this.engine.output()
