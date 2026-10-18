@@ -3,6 +3,17 @@ const MUTED_KEY = 'game-cam.muted'
 const MASTER_VOLUME = 0.8
 const MUTE_RAMP_S = 0.02
 
+type AudioSessionNavigator = Navigator & { audioSession?: { type: string } }
+
+/**
+ * iOS Safari plays Web Audio in the "ambient" session, which the ring/silent switch mutes.
+ * The "playback" session (Safari 17+) plays like media, so music survives silent mode.
+ */
+function requestPlaybackSession(): void {
+  const session = (navigator as AudioSessionNavigator).audioSession
+  if (session) session.type = 'playback'
+}
+
 /** Owns the AudioContext. Browsers only allow starting it from a user gesture: call unlock() in a click handler. */
 export class AudioEngine {
   private ctx: AudioContext | null = null
@@ -19,6 +30,7 @@ export class AudioEngine {
       this.ctx.resume().catch((error: unknown) => console.warn('Audio context could not resume', error))
       return
     }
+    requestPlaybackSession()
     const ctx = new AudioContext()
     const master = ctx.createGain()
     master.gain.value = this.isMuted ? 0 : MASTER_VOLUME
